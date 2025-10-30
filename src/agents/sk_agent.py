@@ -17,16 +17,27 @@ async def init_agent(exit_stack: AsyncExitStack) -> Tuple[ChatCompletionAgent, l
     deployment_name = os.environ.get("MODEL_DEPLOYMENT_NAME")
     endpoint = os.environ.get("PROJECT_ENDPOINT")
 
-    plugins:list[MCPStdioPlugin] = []
+    # stdio communication case
+    # plugins:list[MCPStdioPlugin] = []
+    # plugin = MCPStdioPlugin(
+    #     name="CustomerService",
+    #     description="Customer Service Plugin",
+    #     command="python",
+    #     args=[".\\src\\mcp\\server.py"]
+    # )
+    # await plugin.connect()
 
-    plugin = MCPStdioPlugin(
-        name="inventory",
-        description="inventory Plugin",
-        command="python",
-        args=[".\\src\\local-mcp\\server.py"]
+    # sse communication case
+    plugins:list[MCPSsePlugin] = []
+    plugin = MCPSsePlugin(
+        name="ContosoMCP",
+        description="Contoso MCP Plugin",
+        url="http://localhost:8000/sse", # Replace this if you're not running it locally
+        headers={"Content-Type": "application/json"},
+        timeout=30,
     )
-
     await plugin.connect()
+
 
     plugins.append(plugin)
 
@@ -35,10 +46,10 @@ async def init_agent(exit_stack: AsyncExitStack) -> Tuple[ChatCompletionAgent, l
     settings.function_choice_behavior = FunctionChoiceBehavior.Auto()
 
     service_id = "agent"
-    instrutions = """
-            You are an inventory assistant. Here are some general guidelines:
-            - Recommend restock if item inventory < 10  and weekly sales > 15
-            - Recommend clearance if item inventory > 20 and weekly sales < 5
+    instrutions = """ 
+            You are a helpful assistant. You can use multiple tools to find information
+            and answer questions. Review the tools available under the MCPTools plugin 
+            and use them as needed. You can also ask clarifying questions if the user is not clear.
             """
     
     # Now create our agent and plug in the MCP plugin
@@ -98,7 +109,7 @@ class SemanticKernelAgent:
         async for response in self.agent.invoke_stream(
             messages=message,
             thread=self.thread,
-            #on_intermediate_message=handle_intermediate_steps,
+            on_intermediate_message=handle_intermediate_steps,
         ):
             self.thread = response.thread
             content_items = list(response.items)
