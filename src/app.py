@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from contextlib import AsyncExitStack
 from dotenv import load_dotenv
-from .agents import FoundryTaskAgent, SemanticKernelAgent
+from .agents import SemanticKernelAgent
 from .routes import create_api_routes
 
 # Load environment variables from .env file
@@ -22,7 +22,7 @@ class TaskManagerApp:
             server_url = f"https://{os.getenv('WEBSITE_HOSTNAME')}"
         else:
             # Local development
-            server_url = "http://localhost:3000"
+            server_url = "http://localhost:4000"
         
         self.app = FastAPI(
             title="Task Manager API",
@@ -33,7 +33,6 @@ class TaskManagerApp:
             ]
         )
         
-        self.foundry_agent: FoundryTaskAgent = None
         self.sk_agent: SemanticKernelAgent = None
         self.exit_stack = None
         
@@ -46,14 +45,12 @@ class TaskManagerApp:
         async def startup_event():
             self.exit_stack = AsyncExitStack()
             await self.exit_stack.__aenter__()
-            self.foundry_agent = await FoundryTaskAgent.create(self.exit_stack)
             self.sk_agent = await SemanticKernelAgent.create(self.exit_stack)
             self._setup_routes()  
 
         @self.app.on_event("shutdown")
         async def shutdown_event():
             # delete the Agent on Azure
-            await self.foundry_agent.cleanup() 
             await self.sk_agent.cleanup()
             if self.exit_stack:
                 await self.exit_stack.__aexit__(None, None, None)      
@@ -72,7 +69,6 @@ class TaskManagerApp:
         """Set up API routes and static file serving."""
         # API routes
         api_router = create_api_routes(
-            self.foundry_agent,
             self.sk_agent
         )
         self.app.include_router(api_router, prefix="/api")
@@ -108,7 +104,7 @@ app = app_instance.get_app()
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", "3000"))
+    port = int(os.getenv("PORT", "4000"))
     uvicorn.run(
         "src.app:app",
         host="0.0.0.0",

@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 from ..models import TaskItem, TaskCreateRequest, TaskUpdateRequest, ChatRequest, ChatMessage
-from ..agents import FoundryTaskAgent, SemanticKernelAgent
+from ..agents import SemanticKernelAgent
 
 
 def create_api_routes(
-    foundry_agent: FoundryTaskAgent,
     sk_agent: SemanticKernelAgent
 ) -> APIRouter:
     """
@@ -17,21 +16,6 @@ def create_api_routes(
     """
     router = APIRouter()
     
-    @router.post("/chat/foundry", response_model=ChatMessage, operation_id="chatWithFoundry", include_in_schema=False)
-    async def chat_with_foundry(chat_request: ChatRequest):
-        """Process a chat message using the Foundry agent"""
-        try:
-            if not chat_request.message:
-                raise HTTPException(status_code=400, detail="Message is required")
-            
-            response = await foundry_agent.process_message(chat_request.message)
-            return response
-        except HTTPException:
-            raise
-        except Exception as e:
-            print(f"Error in Foundry chat: {e}")
-            raise HTTPException(status_code=500, detail="Failed to process message")
-        
     @router.post("/chat/semantic", response_model=ChatMessage, operation_id="chatWithSK", include_in_schema=False)
     async def chat_with_foundry(chat_request: ChatRequest):
         """Process a chat message using the SK agent"""
