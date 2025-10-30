@@ -5,6 +5,8 @@ import sqlite3, os, json, math, asyncio, logging
 from datetime import datetime  
 from dotenv import load_dotenv  
 
+print("Starting MCP server...")
+
 load_dotenv()
 
 mcp = FastMCP(  
@@ -22,6 +24,17 @@ def get_db() -> sqlite3.Connection:
     db = sqlite3.connect(DB_PATH)  
     db.row_factory = sqlite3.Row
     return db
+
+def list_tables():
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
+    tables = [row['name'] for row in cursor.fetchall()]
+    db.close()
+    return tables
+
+# Usage:
+print(list_tables())
 
 # — safe OpenAI import / dummy embedding  
 try:  
@@ -597,5 +610,6 @@ def get_billing_summary(params: CustomerIdParam) -> Dict[str, Any]:
 #                                RUN SERVER                                  #  
 ##############################################################################  
 if __name__ == "__main__":  
-    asyncio.run(mcp.run_sse_async(host="0.0.0.0", port=8000))
+    # asyncio.run(mcp.run_sse_async(host="0.0.0.0", port=8000))
+    mcp.run(transport="http", host="127.0.0.1", port=8000, path="/mcp")
     # mcp.run()

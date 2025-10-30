@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from contextlib import AsyncExitStack
 from semantic_kernel.agents import ChatCompletionAgent, ChatHistoryAgentThread
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
-from semantic_kernel.connectors.mcp import MCPSsePlugin, MCPStdioPlugin
+from semantic_kernel.connectors.mcp import MCPSsePlugin, MCPStdioPlugin, MCPStreamableHttpPlugin
 from semantic_kernel.connectors.ai import FunctionChoiceBehavior, PromptExecutionSettings
 from semantic_kernel.functions import kernel_function, KernelArguments, KernelPlugin
 from ..models import ChatMessage, Role
@@ -23,20 +23,32 @@ async def init_agent(exit_stack: AsyncExitStack) -> Tuple[ChatCompletionAgent, l
     #     name="CustomerService",
     #     description="Customer Service Plugin",
     #     command="python",
-    #     args=[".\\src\\mcp\\server.py"]
+    #     args=[".\\src\\mcp\\server.py"],
+    #     env={},
     # )
     # await plugin.connect()
 
-    # sse communication case
-    plugins:list[MCPSsePlugin] = []
-    plugin = MCPSsePlugin(
-        name="ContosoMCP",
-        description="Contoso MCP Plugin",
-        url="http://localhost:8000/sse", # Replace this if you're not running it locally
+    # http communication case
+    plugins:list[MCPStreamableHttpPlugin] = []
+    plugin = MCPStreamableHttpPlugin(
+        name="CustomerServiceHTTP",
+        description="Customer Service HTTP Plugin",
+        url="http://localhost:8000/mcp", # Replace this if you're not running it locally
         headers={"Content-Type": "application/json"},
         timeout=30,
     )
     await plugin.connect()
+
+    # sse communication case
+    # plugins:list[MCPSsePlugin] = []
+    # plugin = MCPSsePlugin(
+    #     name="ContosoMCP",
+    #     description="Contoso MCP Plugin",
+    #     url="http://localhost:8000/sse", # Replace this if you're not running it locally
+    #     headers={"Content-Type": "application/json"},
+    #     timeout=30,
+    # )
+    # await plugin.connect()
 
 
     plugins.append(plugin)
