@@ -610,6 +610,6 @@ def get_billing_summary(params: CustomerIdParam) -> Dict[str, Any]:
 #                                RUN SERVER                                  #  
 ##############################################################################  
 if __name__ == "__main__":  
-    # asyncio.run(mcp.run_sse_async(host="0.0.0.0", port=8000))
+    asyncio.run(mcp.run_sse_async(host="0.0.0.0", port=8000))
     mcp.run(transport="http", host="127.0.0.1", port=8000, path="/mcp")
     # mcp.run()
